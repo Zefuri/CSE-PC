@@ -89,7 +89,7 @@ void mem_free(void* zone) {
                 curBlock->size = curBlock->size + sizeof(struct fb) + curBlock->next->size;
                 curBlock->next = curBlock->next->next;
             }
-        } else {
+        } else if(coeffMin < 0) {
             struct fb* newBlock = (struct fb*) toFreeBlock;
             newBlock->next = nearestFreeBlock;
 
