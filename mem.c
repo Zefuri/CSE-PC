@@ -10,6 +10,7 @@ struct fb {
 
 struct bb {
     size_t size;
+    struct bb* next;
 };
 
 struct header {
@@ -62,9 +63,45 @@ void* mem_alloc(size_t size) {
 void mem_free(void* zone) {
     struct header* head = (struct header*) get_memory_adr();
     struct bb* toFreeBlock = (struct bb*) zone;
+    struct fb* curBlock;
+    struct fb* nearestFreeBlock;
+    int coeffMin;
 
     if(head->first) {
+        curBlock = head->first;
+        nearestFreeBlock = curBlock;
+        coeffMin = ((void *) toFreeBlock) - ((void *) nearestFreeBlock);
 
+        while (curBlock->next) {
+            curBlock = curBlock->next;
+            int curCoeff = ((void *) toFreeBlock) - ((void *) curBlock);
+
+            if(curCoeff < coeffMin) {
+                coeffMin = curCoeff;
+                nearestFreeBlock = curBlock;
+            }
+        }
+
+        if(coeffMin > 0) {
+            curBlock->size = curBlock->size + sizeof(struct bb) + toFreeBlock->size;
+
+            if(curBlock->next == (((void *) curBlock) + sizeof(struct fb) + curBlock->size)) {
+                curBlock->size = curBlock->size + sizeof(struct fb) + curBlock->next->size;
+                curBlock->next = curBlock->next->next;
+            }
+        } else {
+            struct fb* newBlock = (struct fb*) toFreeBlock;
+            newBlock->next = nearestFreeBlock;
+
+            if(newBlock->next == (((void *) newBlock) + sizeof(struct fb) + newBlock->size)) {
+                newBlock->size = newBlock->size + sizeof(struct fb) + newBlock->next->size;
+                newBlock->next = newBlock->next->next;
+            }
+        }
+    } else {
+        head->first = (struct fb*) toFreeBlock;
+        head->first->size = get_memory_size() - sizeof(struct header) - sizeof(struct fb);
+        head->first->next = NULL;
     }
 }
 
