@@ -60,7 +60,12 @@ void* mem_alloc(size_t size) {
 // mem_free
 //-------------------------------------------------------------
 void mem_free(void* zone) {
-   /* A COMPLETER */ 
+    struct header* head = (struct header*) get_memory_adr();
+    struct bb* toFreeBlock = (struct bb*) zone;
+
+    if(head->first) {
+
+    }
 }
 
 //-------------------------------------------------------------
