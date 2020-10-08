@@ -10,7 +10,6 @@ struct fb {
 
 struct bb {
     size_t size;
-    struct bb* next;
 };
 
 struct header {
@@ -65,31 +64,31 @@ void mem_free(void* zone) {
     struct bb* toFreeBlock = (struct bb*) zone;
     struct fb* curBlock;
     struct fb* nearestFreeBlock;
-    int coeffMin;
+    int diffMin;
 
     if(head->first) {
         curBlock = head->first;
         nearestFreeBlock = curBlock;
-        coeffMin = ((void *) toFreeBlock) - ((void *) nearestFreeBlock);
+        diffMin = ((void *) toFreeBlock) - ((void *) nearestFreeBlock);
 
         while (curBlock->next) {
             curBlock = curBlock->next;
-            int curCoeff = ((void *) toFreeBlock) - ((void *) curBlock);
+            int curDiff = ((void *) toFreeBlock) - ((void *) curBlock);
 
-            if(curCoeff < coeffMin) {
-                coeffMin = curCoeff;
+            if(curDiff < diffMin) {
+                diffMin = curDiff;
                 nearestFreeBlock = curBlock;
             }
         }
 
-        if(coeffMin > 0) {
-            curBlock->size = curBlock->size + sizeof(struct bb) + toFreeBlock->size;
+        if(diffMin > 0) {
+            nearestFreeBlock->size = nearestFreeBlock->size + sizeof(struct bb) + toFreeBlock->size;
 
-            if(curBlock->next == (((void *) curBlock) + sizeof(struct fb) + curBlock->size)) {
-                curBlock->size = curBlock->size + sizeof(struct fb) + curBlock->next->size;
-                curBlock->next = curBlock->next->next;
+            if(nearestFreeBlock->next == (((void *) nearestFreeBlock) + sizeof(struct fb) + nearestFreeBlock->size)) {
+                nearestFreeBlock->size = nearestFreeBlock->size + sizeof(struct fb) + nearestFreeBlock->next->size;
+                nearestFreeBlock->next = nearestFreeBlock->next->next;
             }
-        } else if(coeffMin < 0) {
+        } else if(diffMin < 0) {
             struct fb* newBlock = (struct fb*) toFreeBlock;
             newBlock->next = nearestFreeBlock;
 
