@@ -39,13 +39,16 @@ void* mem_alloc(size_t size) {
 
     if(firstAdr) {
         res = (struct bb*) firstAdr;
-
-        struct fb* newBlock = firstAdr + sizeof(struct bb);
-        newBlock->size = firstAdr->size - size;
-
-        head->first = newBlock;
-
         res->size = size;
+
+        if((((void *) firstAdr) + sizeof(struct bb) + size) < (((void *) get_memory_adr()) + get_memory_size())) {
+            struct fb *newBlock = ((void *) firstAdr) + sizeof(struct bb) + size;
+            newBlock->size = firstAdr->size - size;
+
+            head->first = newBlock;
+        } else {
+            head->first = NULL;
+        }
     } else {
         res = NULL;
     }
@@ -83,12 +86,12 @@ struct fb* mem_first_fit(struct fb* head, size_t size) {
     struct fb* precBlock;
     struct fb* curBlock = head;
 
-    while ((curBlock->size < size) && curBlock->next) {
+    while ((curBlock->size < (size + sizeof(struct bb))) && curBlock->next) {
         precBlock = curBlock;
         curBlock = head->next;
     }
 
-    if(curBlock->size >= size) {
+    if(curBlock->size >= (size + sizeof(struct bb))) {
         res = curBlock;
         if(precBlock) {
             precBlock->next = res + size;
